@@ -1,112 +1,162 @@
 ﻿public class Program
 {
     public static void Main(string[] args)
-    {
+    {        
+        Buffet newBuffet = new Buffet();
         Console.WriteLine("Hello, welcome to our buffet!");
-        int people = 0;
         bool buffet = true;
         while (buffet)
         {
+            int people = newBuffet.GetPartyNumber();
+            List<Guest> guests = newBuffet.TakeTableOrder(people);
+            Console.WriteLine("\nWould you like to split the check?");
+            string split = newBuffet.ValidateResponse();
+            newBuffet.GiveBill(split, guests);
+            Console.WriteLine("\nWould you like to go again?");
+            string response = newBuffet.ValidateResponse();
+            buffet = newBuffet.EatAgain(response);
+        }
+    }
+    public interface IBuffet
+    {
+        string ValidateResponse();
+        int GetPartyNumber();
+        void SeeMenu();
+        void AskToSeeMenu();
+        List<Guest> TakeTableOrder(int people);
+        void GiveBill(string split, List<Guest> guests);
+        bool EatAgain(string response);
+    }
+    public class Buffet: IBuffet
+    {
+        public bool EatAgain(string response)
+        {
+            bool buffet = true;
+            if(response == "Y")
+            {  
+                buffet = true;
+                Console.WriteLine("\nGreat!");
+            }
+            else
+            {
+                buffet = false;
+                Console.WriteLine("\nHave a nice day!");
+            }
+            return buffet;
+        }
+        public void AskToSeeMenu()
+        {
+            Console.WriteLine("\nWould you like to see a menu?");
+            string response = ValidateResponse();
+            if (response == "Y")
+            {
+                SeeMenu();
+            }
+        }
+        public void SeeMenu()
+        {
+            decimal soda = 1.50M;
+            decimal coffee = 2.00M;
+            decimal buffet = 9.99M;
+            Console.WriteLine("\n_____________________");
+            Console.WriteLine("Drinks");
+            Console.WriteLine("---------------------");
+            Console.WriteLine(String.Format("{0, -10} | {1, -10}", "Water", "Free"));
+            Console.WriteLine(String.Format("{0, -10} | {1, -10}", "Soda", $"${soda}"));
+            Console.WriteLine(String.Format("{0, -10} | {1, -10}", "Coffee", $"${coffee}"));   
+            Console.WriteLine("_____________________");
+            Console.WriteLine("\nFood");
+            Console.WriteLine("---------------------");
+            Console.WriteLine(String.Format("{0, -10} | {1, -10}", "Buffet", $"${buffet}"));
+            Console.WriteLine("_____________________");
+        }
+        public List<Guest> TakeTableOrder(int people)
+        {
             List<Guest> guests = new List<Guest>();
+            for (int i = 0; i < people; i++)
+            {
+                AskToSeeMenu();
+                var newGuest = new Guest();
+                newGuest = newGuest.TakeGuestOrder();
+                guests.Add(newGuest);
+            }
+            return guests;
+        }
+        public void GiveBill(string split, List<Guest> guests)
+        {
+            if (split == "Y")
+            {
+                guests[0].SplitCheck(guests);
+            }
+            else
+            {
+                Console.WriteLine($"\nThe total is ${guests[0].GetTotalBill(guests)}.");
+            }
+        }
+        public string ValidateResponse()
+        {
+            string validResponse = "";
+            bool valid = false;
+            while (valid == false)
+            {
+                Console.WriteLine("Please enter y for yes and n for no");
+                string response = Console.ReadLine();
+                if (response.Equals("y", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    validResponse = response.ToUpper();
+                    valid = true;
+                }
+                else if (response.Equals("n", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    validResponse = response.ToUpper();
+                    valid = true;
+                }
+                else
+                {
+                    valid = false;
+                    Console.WriteLine("\nI'm sorry, I didn't catch that.");
+                }
+            }
+            return validResponse;
+        }
+        public int GetPartyNumber()
+        {
             bool validParty = false;
+            int people = 0;
             while (validParty == false)
             {
-
-
-                Console.WriteLine();
-                Console.WriteLine("How many people are eating today?  (1-6)");
+                Console.WriteLine("\nHow many people are eating today?  (1-6)");
                 string response = Console.ReadLine();
-                try
+                bool isNum = int.TryParse(response, out people);
+                if (isNum)
                 {
-                    people = Int32.Parse(response);
                     if (people > 0 && people < 7)
                     {
                         validParty = true;
-                        Console.WriteLine();
-                        Console.WriteLine($"Great!  I'll take you {people} right this way.");
+                        Console.WriteLine($"\nGreat!  I'll take you {people} right this way.");
                     }
                     else
                     {
                         validParty = false;
-                        Console.WriteLine();
-                        Console.WriteLine("Sorry, we can only serve 1-6 people per party.");
+                        Console.WriteLine("\nSorry, we can only serve 1-6 people per party.");
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    validParty = false;
-                    Console.WriteLine();
-                    Console.WriteLine("I'm sorry, I think I misunderstood your answer.");
-                }
 
-            }
-            //Now we ask each guest their name and drink order
-            for (int i = 0; i < people; i++)
-            {
-                var newGuest = new Guest();
-                newGuest = newGuest.TakeOrder();
-                guests.Add(newGuest);
-            }
-            bool validCheck = false;
-            while (validCheck == false)
-            {
-                Console.WriteLine();
-                Console.WriteLine("Would you like to split the check or altogether?");
-                Console.WriteLine("Enter y for split or n for together.");
-                string split = Console.ReadLine().ToUpper();
-                if (split == "Y")
-                {
-                    validCheck = true;
-                    guests[0].SplitCheck(guests);
-                }
-                else if (split == "N")
-                {
-                    validCheck = true;
-                    Console.WriteLine();
-                    Console.WriteLine($"The total is {guests[0].GetTotalBill(guests)}.");
-                }
-                else
-                {
-                    validCheck = false;
-                    Console.WriteLine();
-                    Console.WriteLine("Sorry, I didn't catch that.");
+                    validParty = false;
+                    Console.WriteLine("\nI'm sorry, I think I misunderstood your answer.");
                 }
             }
-            bool validResponse = false;
-            while (validResponse == false)
-            {
-                Console.WriteLine();
-                Console.WriteLine("Would you like to go again?");
-                string eatAgain = Console.ReadLine().ToUpper();
-                if (eatAgain == "Y")
-                {
-                    buffet = true;
-                    validResponse = true;
-                    Console.WriteLine();
-                    Console.WriteLine("Great!");
-                }
-                else if (eatAgain == "N")
-                {
-                    buffet = false;
-                    validResponse = true;
-                    Console.WriteLine();
-                    Console.WriteLine("Have a nice day!");
-                }
-                else
-                {
-                    validResponse = false;
-                    Console.WriteLine();
-                    Console.WriteLine("I'm sorry, I didn't catch that.");
-                }
-            }
+            return people;
         }
     }
+   
     public class Guest
     {
         public string Name { get; set; }
         public string drinkChoice { get; set; }
         public decimal totalCost { get; set; }
-
         public Guest(string newName, string newDrinkChoice, decimal newTotalCost)
         {
             Name = newName;
@@ -119,16 +169,15 @@
         }
         public void SplitCheck(List<Guest> guests)
         {
-            Console.WriteLine();
-            foreach(Guest guest in guests)
+            foreach (Guest guest in guests)
             {
-                Console.WriteLine($"{guest.Name} owes {guest.totalCost}.");
+                Console.WriteLine($"\n{guest.Name} owes ${guest.totalCost}.");
             }
         }
         public decimal GetTotalBill(List<Guest> guests)
         {
             decimal totalBill = 0;
-            foreach(Guest guest in guests)
+            foreach (Guest guest in guests)
             {
                 totalBill += guest.totalCost;
             }
@@ -151,23 +200,22 @@
             }
             return totalCost;
         }
-        public Guest TakeOrder() //maybe build on this and ask age. Kids eat free or for 3.99
+        public Guest TakeGuestOrder() //maybe build on this and ask age. Kids eat free or for 3.99
         {
             bool validName = false;
             bool validDrink = false;
             var newGuest = new Guest();
+            //Buffet newBuffet = new Buffet();
             string guestName = "";
             string drinkChoice = "";
-            while(validName == false)
+            while (validName == false)
             {
-                Console.WriteLine();
-                Console.WriteLine("What is your name?");
+                Console.WriteLine("\nWhat is your name?");
                 guestName = Console.ReadLine();
                 if (guestName == "")
                 {
                     validName = false;
-                    Console.WriteLine();
-                    Console.WriteLine("Sorry, I didn't catch that.");
+                    Console.WriteLine("\nSorry, I didn't catch that.");
                 }
                 else
                 {
@@ -179,38 +227,34 @@
             {
                 do
                 {
-                    Console.WriteLine();
-                    Console.WriteLine("What would you like to drink?");
+                    Console.WriteLine("\nWhat would you like to drink?");
                     drinkChoice = Console.ReadLine();
+                    var message = $"\nOkay {newGuest.Name}, one {drinkChoice} for you.";
 
                     if (drinkChoice.Equals("water", StringComparison.CurrentCultureIgnoreCase))
                     {
                         validDrink = true;
                         newGuest.drinkChoice = drinkChoice;
-                        Console.WriteLine();
-                        Console.WriteLine($"Okay {newGuest.Name}, one {newGuest.drinkChoice.ToLower()} for you.");
+                        Console.WriteLine(message);
                     }
                     else if (drinkChoice.Equals("coffee", StringComparison.CurrentCultureIgnoreCase))
                     {
                         validDrink = true;
                         newGuest.drinkChoice = drinkChoice;
-                        Console.WriteLine();
-                        Console.WriteLine($"Okay {newGuest.Name}, one {newGuest.drinkChoice.ToLower()} for you.");
+                        Console.WriteLine(message);
                     }
                     else if (drinkChoice.Equals("soda", StringComparison.CurrentCultureIgnoreCase))
                     {
                         validDrink = true;
                         newGuest.drinkChoice = drinkChoice;
-                        Console.WriteLine();
-                        Console.WriteLine($"Okay {newGuest.Name}, one {newGuest.drinkChoice.ToLower()} for you.");
+                        Console.WriteLine(message);
                     }
                     else
                     {
                         validDrink = false;
-                        Console.WriteLine();
-                        Console.WriteLine("Sorry, we don't have that.  Your choices are water, coffee or self serve soda.");            
+                        Console.WriteLine("\nSorry, we do not have that.");
                     }
-                    
+
                 } while (validDrink == false);
             }
             newGuest.totalCost = newGuest.GetTotalCostOfGuest(newGuest.drinkChoice);
